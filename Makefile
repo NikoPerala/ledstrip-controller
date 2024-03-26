@@ -1,6 +1,6 @@
 MCU = atmega328p
 DMCU = m328p
-DEVICE = 
+DEVICE = /dev/ttyUSB0
 
 F_CPU = 16000000UL
 
@@ -10,13 +10,11 @@ AVRDUDE = avrdude
 PROGRAMMER = arduino
 
 IDIR = ./include
-AVR_CORE = 
-AVR_PINS = 
 
-CFLAGS = -g -Os -mmcu=$(MCU) -DF_CPU=$(F_CPU) -I$(AVR_CORE) -I$(AVR_PINS) -I$(IDIR)
+CFLAGS = -g -Os -mmcu=$(MCU) -DF_CPU=$(F_CPU) -I$(IDIR) 
 
 TARGET = ledstrip_controller
-SRC = ./src/ledstrip.c ./src/light_ws2812.c
+SRC = ./src/ledstrip.c ./src/light_ws2812.c ./src/millis.c
 
 all: $(TARGET).hex
 
