@@ -14,7 +14,7 @@ IDIR = ./include
 CFLAGS = -g -Os -mmcu=$(MCU) -DF_CPU=$(F_CPU) -I$(IDIR) 
 
 TARGET = ledstrip_controller
-SRC = ./src/ledstrip.c ./src/light_ws2812.c ./src/millis.c
+SRC = ./src/ledstrip.c ./src/light_ws2812.c ./src/millis.c ./src/button.c
 
 all: $(TARGET).hex
 
