@@ -7,6 +7,7 @@ void millis_init() {
     TIMSK1 |= (1 << OCIE1A);
     OCR1A = 1999;
     TCCR1B |= (1 << CS11);
+    sei();
 }
 
 ISR(TIMER1_COMPA_vect){
