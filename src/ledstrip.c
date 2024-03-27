@@ -51,15 +51,15 @@ typedef struct LedController {
 } LedController;
 
 
-typedef struct ButtonParams {
+typedef struct PinParams {
     volatile uint8_t *port;
     uint8_t pin;
-} ButtonParams;
+} PinParams;
 
 uint8_t read_pin(Button *button)
 {
-    ButtonParams *bp = (ButtonParams*) button->read_params;
-    return (*bp->port & (1 << bp->pin));
+    PinParams *params = (PinParams*) button->read_params;
+    return (*params->port & (1 << params->pin));
 }
 
 uint8_t read_pin_invert(Button *button)
@@ -71,7 +71,7 @@ int main(void)
 {
 
     DDRD  &=  ~(1 << PORTD2);   // Pin 2 as input
-    PORTD |= (1 << PORTD2);   // Set pullup resistor
+    PORTD |=   (1 << PORTD2);   // Set pullup resistor
 
     millis_init();
     sei();
@@ -87,14 +87,14 @@ int main(void)
         .send_data = 0
     };
 
-    ButtonParams bp = { &PORTD, 2 };
+    PinParams button_params = { .port = &PIND, .pin = 2 };
 
     Button button = { 
         .press = BUTTON_PRESS_NONE, 
         .previous_state = 0, 
         .press_time = 0, 
-        .read_params = (void*) &bp,
-        .read_func = &read_pin_invert
+        .read_params = &button_params,
+        .read_func = read_pin_invert
     };
 
     uint8_t state = STATE_STATIC_COLOR;

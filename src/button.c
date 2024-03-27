@@ -2,7 +2,7 @@
 
 uint8_t read_button(Button *button, uint32_t c_time)
 {
-    uint8_t button_state = button->read_func(button->read_params);
+    uint8_t button_state = button->read_func(button);
 
     if (button_state && !button->previous_state){
         button->press = BUTTON_PRESS_BENDING;
