@@ -18,9 +18,9 @@ uint8_t lerp8(uint8_t a, uint8_t b, float pos)
 
     int16_t d = b - a;
 
-    if (d == 0) return a;
-    if (d > 0) ret = a + (int) (d * pos);
-    if (d < 0) ret = a - (int) (-d * pos);
+    if (d == 0) ret = a;
+    else if (d > 0) ret = a + (int) (d * pos);
+    else if (d < 0) ret = a - (int) (-d * pos);
 
     return ret;
 }
