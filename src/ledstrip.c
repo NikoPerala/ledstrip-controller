@@ -8,13 +8,13 @@
 
 #define LED_AMOUNT 48
 #define RAINBOW_STEP 65535.0 / LED_AMOUNT
-
+#define MAX_SPEED 0b111
 
 
 #define LEDSTRIP_STATES\
     X(STATE_RAINBOW)\
     X(STATE_STATIC_COLOR)\
-    X(STATE_OFF)\
+    X(STATE_LERP_RANDOM)\
     X(STATE_COUNT)
 
 #define X(name) name,
@@ -49,10 +49,15 @@ void set_all_to_cRGB(cRGB leds[LED_AMOUNT], cRGB color)
 
 typedef struct LedController {
     uint8_t state;
+    //
     float angle;
     uint8_t position;
     uint8_t color_count;
     uint8_t interval;
+
+    cRGB color_a;               // rndlerp
+    cRGB color_b;               // rndlerp
+    int8_t speed;           // rndlerp && rainbow
     uint8_t send_data : 1;
     uint8_t set_data : 1;
     Button button;
@@ -85,6 +90,7 @@ int main(void)
     cRGB leds[LED_AMOUNT];
 
     PinParams button_params = { .port = &PIND, .pin = 2 };
+/*
     Button button = { 
         .press = BUTTON_PRESS_NONE, 
         .previous_state = 0, 
@@ -92,30 +98,41 @@ int main(void)
         .read_params = &button_params,
         .read_func = read_pin_invert
     };
-
+*/
     LedController lc = { 
-        .state = STATE_STATIC_COLOR, 
+        .state = STATE_RAINBOW, 
         .angle = 0.f, 
         .position = 0, 
         .color_count = 0,
         .interval = 17,
         .send_data = 0,
+        .speed = 1,
         .set_data = 1,
-        .button = button
+        //.button = button,
+        .button = (Button) { 
+            .press = BUTTON_PRESS_NONE, 
+            .previous_state = 0, 
+            .press_time = 0, 
+            .read_params = &button_params,
+            .read_func = read_pin_invert
+        }
     };
 
     uint32_t c_time = millis();
-    uint32_t p_time = c_time;
+    //uint32_t p_time = c_time;
 
 
     int button_pressed = 0; 
     int button_press_type = 0;
 
-    int rainbow_offset = 0;
+    uint16_t rainbow_offset = 0;
 
     for(;;)
     {
         c_time = millis();
+
+        rainbow_offset += lc.speed * 10;
+        if (rainbow_offset >= 0xffff) rainbow_offset -= 0xffff;
 
         button_pressed = read_button(&lc.button, c_time);
         if (button_pressed){
@@ -138,19 +155,24 @@ int main(void)
                 }
                 break;
             case STATE_RAINBOW:
+                if ((button_pressed && button_press_type == BUTTON_PRESS_QUICK)){
+                    lc.speed++;
+                    if(lc.speed > MAX_SPEED) lc.speed = 0;
+                }
+                if ((button_pressed && button_press_type == BUTTON_PRESS_DOUBLE)){
+                    lc.speed *= -1;
+                }
                 for (int i = 0; i < LED_AMOUNT; ++i){
-                    leds[i] = HSV_to_ColorRGB(i * RAINBOW_STEP, 0xff, 0xff);
+                    uint16_t val = i * RAINBOW_STEP + rainbow_offset;
+                    val = val >=  0xffff ? val - 0xffff : val;
+                    leds[i] = HSV_to_ColorRGB(val, 0xff, 0xff);
                 }
                 lc.send_data = 1;
                 lc.set_data = 0;
                 break;
-            case STATE_OFF:
-                set_all_to_cRGB(leds, (cRGB) { 0, 0, 0});
-                lc.send_data = 1;
-                break;
         }
        
-        if (button_pressed && button_press_type == BUTTON_PRESS_DOUBLE) lc.state = STATE_OFF;
+   //     if (button_pressed && button_press_type == BUTTON_PRESS_DOUBLE) lc.state = STATE_OFF;
 
         if (lc.send_data) {
             ws2812_setleds(leds, LED_AMOUNT);
